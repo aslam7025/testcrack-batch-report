@@ -2,13 +2,13 @@ require('dotenv').config()
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const {GoogleGenerativeAI} = require("@google/generative-ai")
+const { GoogleGenerativeAI } = require("@google/generative-ai")
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-const client =  new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -158,9 +158,9 @@ Batch average improvement: ${stats.batch_average_improvement > 0 ? "+" : ""}${st
 
 Write exactly 3 sentences as a narrative summary for the tutor. Be direct, specific, and professional. Do not include any heading or preamble.`;
 
- const model = client.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
- const response = await model.generateContent(prompt)
- return response.response.text().trim();
+  const model = client.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+  const response = await model.generateContent(prompt)
+  return response.response.text().trim();
 }
 
 // ─── AI WhatsApp alert (per at-risk student) ─────────────────────────────────
@@ -178,9 +178,9 @@ Exam in: ${studentInfo._examDaysLeft} days
 
 Write only the message text, no labels or preamble.`;
 
- const model = client.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
- const response = await model.generateContent(prompt);
- return response.response.text().trim();
+  const model = client.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+  const response = await model.generateContent(prompt);
+  return response.response.text().trim();
 }
 
 // ─── route ───────────────────────────────────────────────────────────────────
