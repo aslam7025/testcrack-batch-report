@@ -1,0 +1,46 @@
+{
+  "batch_id": "batch-kerala-2026",
+  "exam_type": "IELTS",
+  "students": [
+    {
+      "id": "s001",
+      "name": "Riya Menon",
+      "diagnostic_band": { "speaking": 4.0, "writing": 5.0, "reading": 5.5, "listening": 5.5 },
+      "current_band":    { "speaking": 4.5, "writing": 5.5, "reading": 5.5, "listening": 6.0 },
+      "sessions_completed": 12,
+      "last_active": "2026-05-10",
+      "target_band": 7.0,
+      "exam_date": "2026-08-01"
+    },
+    {
+      "id": "s002",
+      "name": "Arjun K",
+      "diagnostic_band": { "speaking": 5.0, "writing": 5.5, "reading": 6.0, "listening": 6.0 },
+      "current_band":    { "speaking": 5.0, "writing": 5.5, "reading": 6.0, "listening": 6.5 },
+      "sessions_completed": 8,
+      "last_active": "2026-05-06",
+      "target_band": 7.0,
+      "exam_date": "2026-07-15"
+    },
+    {
+      "id": "s003",
+      "name": "Priya S",
+      "diagnostic_band": { "speaking": 4.0, "writing": 4.5, "reading": 4.5, "listening": 5.0 },
+      "current_band":    { "speaking": 4.0, "writing": 4.0, "reading": 4.5, "listening": 5.0 },
+      "sessions_completed": 3,
+      "last_active": "2026-05-01",
+      "target_band": 6.5,
+      "exam_date": "2026-07-01"
+    },
+    {
+      "id": "s004",
+      "name": "Rahul P",
+      "diagnostic_band": { "speaking": 5.5, "writing": 5.0, "reading": 5.5, "listening": 5.5 },
+      "current_band":    { "speaking": 6.0, "writing": 5.5, "reading": 6.0, "listening": 6.0 },
+      "sessions_completed": 15,
+      "last_active": "2026-05-11",
+      "target_band": 7.0,
+      "exam_date": "2026-09-01"
+    }
+  ]
+}

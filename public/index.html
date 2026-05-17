@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TestCrack — Batch Report</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #f5f3ef;
+    --surface:   #ffffff;
+    --border:    #e2ddd6;
+    --text:      #1a1714;
+    --muted:     #7a7269;
+    --accent:    #2d5a3d;
+    --accent-lt: #eef4f0;
+    --danger:    #8b2020;
+    --danger-lt: #fdf0f0;
+    --warn:      #7a4f00;
+    --warn-lt:   #fdf6e3;
+    --blue:      #1a3d6b;
+    --blue-lt:   #eef2f9;
+    --gold:      #b8860b;
+    --gold-lt:   #fefae8;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--accent);
+    color: #fff;
+    padding: 0 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+  .logo span { opacity: 0.55; font-size: 0.9rem; font-family: 'DM Sans', sans-serif; margin-left: 10px; font-weight: 300; }
+
+  .header-actions { display: flex; gap: 10px; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-primary {
+    background: #fff;
+    color: var(--accent);
+    border-color: rgba(255,255,255,0.3);
+  }
+  .btn-primary:hover { background: rgba(255,255,255,0.9); }
+  .btn-outline {
+    background: transparent;
+    color: #fff;
+    border-color: rgba(255,255,255,0.4);
+  }
+  .btn-outline:hover { background: rgba(255,255,255,0.1); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-sm {
+    padding: 6px 14px;
+    font-size: 13px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 1050px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 4rem;
+  }
+
+  /* ── Empty state ── */
+  #empty-state {
+    text-align: center;
+    padding: 80px 20px;
+  }
+  #empty-state .big-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+    display: block;
+    opacity: 0.25;
+  }
+  #empty-state h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    font-weight: 400;
+  }
+  #empty-state p {
+    color: var(--muted);
+    margin-bottom: 2rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .generate-big {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: opacity 0.15s;
+  }
+  .generate-big:hover { opacity: 0.88; }
+
+  /* ── Loading ── */
+  #loading {
+    display: none;
+    text-align: center;
+    padding: 80px 20px;
+  }
+  .spinner {
+    width: 44px;
+    height: 44px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1.5rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading p { color: var(--muted); font-size: 14px; }
+
+  /* ── Report ── */
+  #report { display: none; }
+
+  .report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .report-title h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  .report-title p { color: var(--muted); font-size: 14px; margin-top: 3px; }
+  .download-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  /* ── Stat cards ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .stat-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .stat-card.accent  { background: var(--accent-lt); border-color: #b8d9c4; }
+  .stat-card.danger  { background: var(--danger-lt); border-color: #f0bcbc; }
+  .stat-card.gold    { background: var(--gold-lt);   border-color: #e8d48a; }
+
+  /* ── Section ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.15rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .badge-danger  { background: var(--danger-lt); color: var(--danger); }
+  .badge-accent  { background: var(--accent-lt); color: var(--accent); }
+  .badge-blue    { background: var(--blue-lt);   color: var(--blue); }
+
+  /* ── Narrative ── */
+  .narrative-text {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text);
+    border-left: 3px solid var(--accent);
+    padding-left: 1.25rem;
+    font-style: italic;
+  }
+
+  /* ── At-risk card ── */
+  .risk-card {
+    border: 1px solid #f0bcbc;
+    background: var(--danger-lt);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 10px;
+  }
+  .risk-card:last-child { margin-bottom: 0; }
+  .risk-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .risk-reason { font-size: 13px; color: var(--danger); margin-bottom: 8px; line-height: 1.5; }
+  .risk-action { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+  /* ── WhatsApp message ── */
+  .whatsapp-box {
+    margin-top: 10px;
+    background: #f0fdf4;
+    border: 1px solid #bbf0c8;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #1a4028;
+    position: relative;
+  }
+  .whatsapp-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 600;
+    color: #3a7a4a;
+    margin-bottom: 5px;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #fff;
+    border: 1px solid #bbf0c8;
+    border-radius: 5px;
+    padding: 3px 9px;
+    font-size: 11px;
+    cursor: pointer;
+    color: #3a7a4a;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { background: #e8fbed; }
+
+  /* ── Student table ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  thead th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--bg);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #fafaf8; }
+
+  .delta-pos { color: var(--accent); font-weight: 600; }
+  .delta-neg { color: var(--danger); font-weight: 600; }
+  .delta-zero { color: var(--muted); }
+
+  .risk-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+  .risk-dot.yes { background: var(--danger); }
+  .risk-dot.no  { background: #b0c8b8; }
+
+  /* ── Skills breakdown ── */
+  .skill-bars { display: flex; flex-direction: column; gap: 6px; }
+  .skill-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .skill-name { width: 70px; color: var(--muted); text-transform: capitalize; }
+  .skill-track { flex: 1; background: var(--bg); border-radius: 4px; height: 6px; }
+  .skill-fill { height: 6px; border-radius: 4px; background: var(--accent); }
+  .skill-val { width: 28px; text-align: right; font-weight: 500; }
+
+  /* ── Error ── */
+  #error-box {
+    display: none;
+    background: var(--danger-lt);
+    border: 1px solid #f0bcbc;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    color: var(--danger);
+    margin-top: 2rem;
+    font-size: 14px;
+  }
+
+  @media (max-width: 640px) {
+    header { padding: 0 1.25rem; }
+    main { padding: 1.5rem 1rem 3rem; }
+    .report-header { flex-direction: column; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">TestCrack <span>Batch Reports</span></div>
+  <div class="header-actions">
+    <button class="btn btn-outline" id="header-generate-btn" onclick="generateReport()" disabled>
+      ↻ Regenerate
+    </button>
+    <button class="btn btn-outline btn-sm-dl" id="header-pdf-btn" onclick="downloadPDF()" disabled style="display:none">
+      ↓ PDF
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <!-- Empty state -->
+  <div id="empty-state">
+    <span class="big-icon">📊</span>
+    <h2>Batch Progress Report</h2>
+    <p>Generate a weekly AI-powered summary of your IELTS batch — with at-risk alerts and tutor WhatsApp messages.</p>
+    <button class="generate-big" onclick="generateReport()">
+      <span>Generate Report</span>
+      <span>→</span>
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Analysing batch data and generating AI narrative…</p>
+  </div>
+
+  <!-- Error -->
+  <div id="error-box"></div>
+
+  <!-- Report -->
+  <div id="report">
+
+    <div class="report-header">
+      <div class="report-title">
+        <h1 id="rpt-title">Batch Report</h1>
+        <p id="rpt-meta"></p>
+      </div>
+      <div class="download-group">
+        <button class="btn-sm" onclick="downloadJSON()">↓ Download JSON</button>
+        <button class="btn-sm" onclick="downloadPDF()">↓ Download PDF</button>
+        <button class="btn-sm" onclick="generateReport()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="stats-grid"></div>
+
+    <!-- Narrative -->
+    <div class="section">
+      <div class="section-title">📝 AI Narrative Summary</div>
+      <p class="narrative-text" id="narrative-text"></p>
+    </div>
+
+    <!-- At-risk -->
+    <div class="section" id="risk-section">
+      <div class="section-title">
+        ⚠️ At-Risk Students
+        <span class="badge badge-danger" id="risk-count"></span>
+      </div>
+      <div id="risk-list"></div>
+    </div>
+
+    <!-- Student table -->
+    <div class="section">
+      <div class="section-title">👥 All Students</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Sessions</th>
+              <th>Inactive</th>
+              <th>Exam in</th>
+              <th>Avg Band</th>
+              <th>Target</th>
+              <th>Δ Improvement</th>
+              <th>At Risk</th>
+            </tr>
+          </thead>
+          <tbody id="student-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Skill breakdown -->
+    <div class="section">
+      <div class="section-title">📈 Current Skill Bands</div>
+      <div id="skill-breakdown" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem;"></div>
+    </div>
+
+  </div><!-- /report -->
+
+</main>
+
+<script>
+let currentReport = null;
+
+async function generateReport() {
+  showState('loading');
+  document.getElementById('header-generate-btn').disabled = true;
+
+  try {
+    const res = await fetch('/api/batch-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ batch_id: 'batch-kerala-2026' })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Server error');
+    }
+
+    currentReport = await res.json();
+    renderReport(currentReport);
+    showState('report');
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    document.getElementById('header-generate-btn').disabled = false;
+  }
+}
+
+function showState(state) {
+  ['empty-state','loading','report','error-box'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  if (state === 'report') {
+    document.getElementById('report').style.display = 'block';
+    document.getElementById('header-generate-btn').disabled = false;
+    document.getElementById('header-pdf-btn').style.display = 'inline-flex';
+    document.getElementById('header-pdf-btn').disabled = false;
+  } else if (state === 'loading') {
+    document.getElementById('loading').style.display = 'block';
+  } else if (state === 'empty') {
+    document.getElementById('empty-state').style.display = 'block';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-box');
+  el.style.display = 'block';
+  el.textContent = '⚠ Error: ' + msg;
+  showState('empty');
+  el.style.display = 'block';
+}
+
+function renderReport(data) {
+  const s = data.summary_stats;
+
+  // Header
+  document.getElementById('rpt-title').textContent =
+    data.batch_id.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+  document.getElementById('rpt-meta').textContent =
+    `Report date: ${data.report_date} · IELTS`;
+
+  // Stat cards
+  document.getElementById('stats-grid').innerHTML = [
+    { label:'Total Students', value: s.total_students, sub:'enrolled', cls:'' },
+    { label:'Active This Week', value: s.active_this_week, sub:'out of '+s.total_students, cls:'accent' },
+    { label:'At Risk', value: s.at_risk, sub:'need attention', cls: s.at_risk > 0 ? 'danger' : '' },
+    { label:'Most Improved', value: s.most_improved_student.split(' ')[0], sub:'+'+s.most_improved_delta+' avg bands', cls:'gold' },
+    { label:'Batch Avg Δ', value: (s.batch_average_improvement >= 0 ? '+' : '')+s.batch_average_improvement, sub:'avg band improvement', cls:'accent' },
+  ].map(c => `
+    <div class="stat-card ${c.cls}">
+      <div class="stat-label">${c.label}</div>
+      <div class="stat-value">${c.value}</div>
+      <div class="stat-sub">${c.sub}</div>
+    </div>
+  `).join('');
+
+  // Narrative
+  document.getElementById('narrative-text').textContent = data.ai_narrative;
+
+  // At-risk
+  const riskList = document.getElementById('risk-list');
+  document.getElementById('risk-count').textContent = data.at_risk_students.length;
+  if (data.at_risk_students.length === 0) {
+    riskList.innerHTML = '<p style="color:var(--muted);font-size:14px;">No students currently at risk. 🎉</p>';
+  } else {
+    riskList.innerHTML = data.at_risk_students.map(s => `
+      <div class="risk-card">
+        <div class="risk-name">${s.name}</div>
+        <div class="risk-reason">${s.risk_reason}</div>
+        <div class="risk-action">Recommended: ${s.recommended_action}</div>
+        ${s.tutor_alert_message ? `
+        <div class="whatsapp-box">
+          <div class="whatsapp-label">📱 WhatsApp Message</div>
+          <button class="copy-btn" onclick="copyMsg(this, '${escapeAttr(s.tutor_alert_message)}')">Copy</button>
+          <div>${escapeHtml(s.tutor_alert_message)}</div>
+        </div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  // Student table
+  const tbody = document.getElementById('student-tbody');
+  tbody.innerHTML = data.student_summaries.map(s => {
+    const dClass = s.avg_band_delta > 0 ? 'delta-pos' : s.avg_band_delta < 0 ? 'delta-neg' : 'delta-zero';
+    const dSign  = s.avg_band_delta > 0 ? '+' : '';
+    return `
+      <tr>
+        <td style="font-weight:500">${s.name}</td>
+        <td>${s.sessions_completed}</td>
+        <td>${s.days_inactive}d ago</td>
+        <td>${s.exam_days_left}d</td>
+        <td>${s.current_avg_band.toFixed(1)}</td>
+        <td>${s.target_band.toFixed(1)}</td>
+        <td class="${dClass}">${dSign}${s.avg_band_delta.toFixed(2)}</td>
+        <td><span class="risk-dot ${s.at_risk ? 'yes' : 'no'}"></span>${s.at_risk ? 'Yes' : 'No'}</td>
+      </tr>
+    `;
+  }).join('');
+
+  // Skill breakdown
+  const skillDiv = document.getElementById('skill-breakdown');
+  skillDiv.innerHTML = data.student_summaries.map(s => `
+    <div>
+      <div style="font-weight:600;font-size:14px;margin-bottom:10px">${s.name}</div>
+      <div class="skill-bars">
+        ${['speaking','writing','reading','listening'].map(sk => `
+          <div class="skill-row">
+            <div class="skill-name">${sk}</div>
+            <div class="skill-track">
+              <div class="skill-fill" style="width:${(s.current_band[sk]/9*100).toFixed(1)}%"></div>
+            </div>
+            <div class="skill-val">${s.current_band[sk].toFixed(1)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Download JSON ──────────────────────────────────────────────────────────
+function downloadJSON() {
+  if (!currentReport) return;
+  const blob = new Blob([JSON.stringify(currentReport, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${currentReport.batch_id}-report-${currentReport.report_date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Download PDF ───────────────────────────────────────────────────────────
+function downloadPDF() {
+  if (!currentReport) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const s = currentReport.summary_stats;
+  const W = 210, pad = 18;
+  let y = 20;
+
+  // Title
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(45, 90, 61);
+  doc.text('TestCrack — Batch Progress Report', pad, y);
+  y += 8;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(120, 113, 100);
+  doc.text(`Batch: ${currentReport.batch_id}  |  Report date: ${currentReport.report_date}`, pad, y);
+  y += 10;
+
+  // Stats row
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(30, 30, 30);
+  const stats = [
+    `Students: ${s.total_students}`,
+    `Active: ${s.active_this_week}`,
+    `At-risk: ${s.at_risk}`,
+    `Batch Δ: ${s.batch_average_improvement >= 0 ? '+' : ''}${s.batch_average_improvement}`,
+  ];
+  stats.forEach((txt, i) => {
+    doc.text(txt, pad + i * 45, y);
+  });
+  y += 12;
+
+  // Narrative
+  doc.setFont('helvetica', 'bolditalic');
+  doc.setFontSize(11);
+  doc.setTextColor(45, 90, 61);
+  doc.text('AI Narrative Summary', pad, y); y += 6;
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(10);
+  doc.setTextColor(60, 60, 60);
+  const lines = doc.splitTextToSize(currentReport.ai_narrative, W - pad * 2);
+  doc.text(lines, pad, y);
+  y += lines.length * 5 + 10;
+
+  // At-risk students
+  if (currentReport.at_risk_students.length > 0) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(139, 32, 32);
+    doc.text('At-Risk Students', pad, y); y += 7;
+
+    currentReport.at_risk_students.forEach(st => {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(30, 30, 30);
+      doc.text(st.name, pad, y); y += 5;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(100, 50, 50);
+      const rlines = doc.splitTextToSize(st.risk_reason, W - pad * 2 - 5);
+      doc.text(rlines, pad + 4, y);
+      y += rlines.length * 4 + 2;
+
+      if (st.tutor_alert_message) {
+        doc.setTextColor(30, 80, 50);
+        const wlines = doc.splitTextToSize('WhatsApp: ' + st.tutor_alert_message, W - pad * 2 - 5);
+        doc.text(wlines, pad + 4, y);
+        y += wlines.length * 4 + 4;
+      }
+      y += 2;
+    });
+    y += 4;
+  }
+
+  // Student table
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(26, 23, 20);
+  doc.text('Student Summaries', pad, y); y += 5;
+
+  doc.autoTable({
+    startY: y,
+    margin: { left: pad, right: pad },
+    head: [['Name','Sessions','Inactive','Exam In','Avg Band','Target','Δ','At Risk']],
+    body: currentReport.student_summaries.map(s => [
+      s.name,
+      s.sessions_completed,
+      s.days_inactive + 'd',
+      s.exam_days_left + 'd',
+      s.current_avg_band.toFixed(1),
+      s.target_band.toFixed(1),
+      (s.avg_band_delta >= 0 ? '+' : '') + s.avg_band_delta.toFixed(2),
+      s.at_risk ? 'Yes' : 'No'
+    ]),
+    headStyles: { fillColor: [45, 90, 61], fontSize: 9 },
+    bodyStyles: { fontSize: 9 },
+    alternateRowStyles: { fillColor: [245, 243, 239] },
+  });
+
+  doc.save(`${currentReport.batch_id}-report-${currentReport.report_date}.pdf`);
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escapeAttr(str) {
+  return str.replace(/'/g,"\\'").replace(/\n/g,' ');
+}
+function copyMsg(btn, msg) {
+  navigator.clipboard.writeText(msg).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1800);
+  });
+}
+</script>
+</body>
+</html>
