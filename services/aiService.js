@@ -1,6 +1,6 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const Groq = require("groq-sdk");
 
-const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 async function generateNarrative(batch, stats, atRisk) {
   const atRiskNames = atRisk.map((s) => s.name).join(", ") || "none";
@@ -15,9 +15,12 @@ Batch average improvement: ${stats.batch_average_improvement > 0 ? "+" : ""}${st
 
 Write exactly 3 sentences as a narrative summary for the tutor. Be direct, specific, and professional. Do not include any heading or preamble.`;
 
- const model = client.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
- const response = await model.generateContent(prompt)
- return response.response.text().trim();
+const response = await client.chat.completions.create({
+  model: "llama-3.3-70b-versatile",
+  messages: [{ role: "user", content: prompt }],
+  max_tokens: 200,
+});
+return response.choices[0].message.content.trim();
 }
 
 async function generateWhatsAppMessage(studentInfo) {
@@ -33,9 +36,12 @@ Exam in: ${studentInfo._examDaysLeft} days
 
 Write only the message text, no labels or preamble.`;
 
- const model = client.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
- const response = await model.generateContent(prompt);
- return response.response.text().trim();
+const response = await client.chat.completions.create({
+  model: "llama-3.3-70b-versatile",
+  messages: [{ role: "user", content: prompt }],
+  max_tokens: 150,
+});
+return response.choices[0].message.content.trim();
 }
 
 module.exports = {
